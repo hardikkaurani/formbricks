@@ -117,7 +117,11 @@ export const getChoiceIdByValue = (
     return element.choices.find((choice) => choice.imageUrl === value)?.id ?? "other";
   }
 
-  return element.choices.find((choice) => choice.label.default === value)?.id ?? "other";
+  return (
+    element.choices.find(
+      (choice) => choice.label.default === value || Object.values(choice.label).includes(value)
+    )?.id ?? "other"
+  );
 };
 
 export const calculateTtcTotal = (ttc: TResponseTtc) => {

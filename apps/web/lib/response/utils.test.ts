@@ -14,6 +14,7 @@ import { convertToCsv, convertToXlsxBuffer } from "@/lib/utils/file-conversion";
 import {
   calculateTtcTotal,
   extractChoiceIdsFromResponse,
+  getChoiceIdByValue,
   extractSurveyDetails,
   getReservedFilterEntries,
   getResponseContactAttributes,
@@ -2075,6 +2076,62 @@ describe("extractChoiceIdsFromResponse", () => {
       );
 
       expect(result).toEqual(["choice-1"]);
+    });
+  });
+  describe("getChoiceIdByValue", () => {
+    const element = {
+      id: "question-1",
+      type: "multipleChoiceSingle",
+      headline: { default: "Question 1" },
+      choices: [
+        {
+          id: "choice-1",
+          label: {
+            default: "Yes",
+            de: "Ja",
+            es: "Sí",
+          },
+        },
+        {
+          id: "choice-2",
+          label: {
+            default: "No",
+            de: "Nein",
+            es: "No",
+          },
+        },
+      ],
+    } as any;
+
+    test("should return choice ID for default language label", () => {
+      expect(getChoiceIdByValue("Yes", element)).toBe("choice-1");
+      expect(getChoiceIdByValue("No", element)).toBe("choice-2");
+    });
+
+    test("should return choice ID for translated language labels", () => {
+      expect(getChoiceIdByValue("Ja", element)).toBe("choice-1");
+      expect(getChoiceIdByValue("Nein", element)).toBe("choice-2");
+      expect(getChoiceIdByValue("Sí", element)).toBe("choice-1");
+    });
+
+    test("should return 'other' for non-matching free-text answer", () => {
+      expect(getChoiceIdByValue("Something else", element)).toBe("other");
+    });
+
+    test("should return choice ID for pictureSelection element by imageUrl", () => {
+      const pictureElement = {
+        id: "picture-1",
+        type: "pictureSelection",
+        headline: { default: "Pick a picture" },
+        choices: [
+          {
+            id: "pic-1",
+            imageUrl: "https://example.com/pic1.png",
+          },
+        ],
+      } as any;
+      expect(getChoiceIdByValue("https://example.com/pic1.png", pictureElement)).toBe("pic-1");
+      expect(getChoiceIdByValue("https://example.com/other.png", pictureElement)).toBe("other");
     });
   });
 });
